@@ -138,4 +138,22 @@ describe('_auth-client.provider', () => {
     expect(authClientMock.signIn).toHaveBeenCalledWith({maxTimeToLive: 123n});
     expect(initAuth).toHaveBeenCalledTimes(1);
   });
+
+  it('forwards openIdProvider for one-click sign-in', async () => {
+    const initAuth = vi.fn().mockResolvedValue(undefined);
+
+    authClientMock.signIn.mockResolvedValue(mock());
+
+    await expect(
+      provider.signIn({
+        options: {openIdProvider: 'google'},
+        createAuthClient,
+        initAuth
+      })
+    ).resolves.toBeUndefined();
+
+    expect(createAuthClient).toHaveBeenCalledWith(
+      expect.objectContaining({openIdProvider: 'google'})
+    );
+  });
 });

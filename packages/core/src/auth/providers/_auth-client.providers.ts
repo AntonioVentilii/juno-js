@@ -114,7 +114,10 @@ export abstract class AuthClientProvider {
     const authClient = await createAuthClient({
       identityProvider,
       ...(windowOpenerFeatures !== undefined && {windowOpenerFeatures}),
-      ...(options?.derivationOrigin !== undefined && {derivationOrigin: options.derivationOrigin})
+      ...(options?.derivationOrigin !== undefined && {derivationOrigin: options.derivationOrigin}),
+      // One-click sign-in: forward the chosen OpenID provider so the identity
+      // provider authenticates directly with it (e.g. Google).
+      ...(options?.openIdProvider !== undefined && {openIdProvider: options.openIdProvider})
     });
 
     try {
