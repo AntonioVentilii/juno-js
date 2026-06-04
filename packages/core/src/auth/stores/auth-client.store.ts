@@ -8,6 +8,13 @@ import {
 import type {DelegationChain, ECDSAKeyIdentity} from '@icp-sdk/core/identity';
 import {isNullish} from '@junobuild/utils';
 
+// `@icp-sdk/auth` v7's synchronous `isAuthenticated()` reads a cached delegation
+// expiration from this localStorage key (written by `signIn`). It is an internal
+// upstream constant not exported by the package. Flows that inject a session
+// manually (OpenID redirect, WebAuthn) bypass `signIn`, so we mirror the cache.
+// TODO: replace with an upstream helper once one is exposed.
+const KEY_STORAGE_EXPIRATION = 'ic-delegation_expiration';
+
 export class AuthClientStore {
   static #instance: AuthClientStore | undefined;
 
@@ -23,6 +30,9 @@ export class AuthClientStore {
     return this.#instance;
   }
 
+  // Kept async for backwards-compatible call sites even though v7's constructor
+  // is synchronous (see body).
+  // eslint-disable-next-line require-await
   createAuthClient = async (
     options?: Pick<
       AuthClientCreateOptions,
@@ -69,6 +79,11 @@ export class AuthClientStore {
   logout = async (): Promise<void> => {
     await this.#authClient?.signOut();
 
+    // `signOut()` clears the cached expiration, but only when an AuthClient
+    // exists. Clear it unconditionally so a manually-injected session (which may
+    // have set it without an AuthClient instance) is always fully cleared.
+    localStorage.removeItem(KEY_STORAGE_EXPIRATION);
+
     // Reset local object otherwise next sign in (sign in - sign out - sign in) might not work out - i.e. agent-js might not recreate the delegation or identity if not resetted
     // Technically we do not need this since we recreate the agent below. We just keep it to make the reset explicit.
     this.#authClient = null;
@@ -87,5 +102,17 @@ export class AuthClientStore {
       storage.set(KEY_STORAGE_KEY, sessionKey.getKeyPair()),
       storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(delegationChain.toJSON()))
     ]);
+
+    // Mirror what `signIn` caches so the synchronous `isAuthenticated()` works
+    // for sessions injected here (OpenID redirect, WebAuthn): the earliest
+    // delegation expiration (in nanoseconds) under KEY_STORAGE_EXPIRATION.
+    const earliest = (delegationChain.delegations ?? []).reduce<bigint | null>(
+      (min, {delegation: {expiration}}) => (min === null || expiration < min ? expiration : min),
+      null
+    );
+
+    if (earliest !== null) {
+      localStorage.setItem(KEY_STORAGE_EXPIRATION, earliest.toString());
+    }
   };
 }
