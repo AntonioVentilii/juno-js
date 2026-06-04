@@ -1,5 +1,6 @@
 import {
   AuthClient,
+  type AuthClientCreateOptions,
   IdbStorage,
   KEY_STORAGE_DELEGATION,
   KEY_STORAGE_KEY
@@ -22,12 +23,23 @@ export class AuthClientStore {
     return this.#instance;
   }
 
-  createAuthClient = async (): Promise<AuthClient> => {
-    this.#authClient = await AuthClient.create({
+  createAuthClient = async (
+    options?: Pick<
+      AuthClientCreateOptions,
+      'identityProvider' | 'derivationOrigin' | 'windowOpenerFeatures' | 'openIdProvider'
+    >
+  ): Promise<AuthClient> => {
+    // `@icp-sdk/auth` v7 replaced the async `AuthClient.create()` factory with a
+    // synchronous constructor, and moved the provider options (identityProvider,
+    // derivationOrigin, windowOpenerFeatures, openIdProvider) from the per-call
+    // `login()` to construction time. We keep this method async so callers don't
+    // have to change, and forward the provider options supplied at sign-in.
+    this.#authClient = new AuthClient({
       idleOptions: {
         disableIdle: true,
         disableDefaultIdleCallback: true
-      }
+      },
+      ...options
     });
 
     return this.#authClient;
@@ -55,7 +67,7 @@ export class AuthClientStore {
   getAuthClient = (): AuthClient | undefined | null => this.#authClient;
 
   logout = async (): Promise<void> => {
-    await this.#authClient?.logout();
+    await this.#authClient?.signOut();
 
     // Reset local object otherwise next sign in (sign in - sign out - sign in) might not work out - i.e. agent-js might not recreate the delegation or identity if not resetted
     // Technically we do not need this since we recreate the agent below. We just keep it to make the reset explicit.

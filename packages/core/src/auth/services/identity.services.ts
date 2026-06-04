@@ -3,7 +3,7 @@ import {isNullish} from '@junobuild/utils';
 import {AuthClientStore} from '../stores/auth-client.store';
 import {AuthStore} from '../stores/auth.store';
 
-export const getIdentity = (): Identity | undefined =>
+export const getIdentity = async (): Promise<Identity | undefined> =>
   AuthClientStore.getInstance().getAuthClient()?.getIdentity();
 
 /**
