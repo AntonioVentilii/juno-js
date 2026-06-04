@@ -1,5 +1,6 @@
 export class SignInError extends Error {}
 export class SignInInitError extends Error {}
+export class RequestAttributesInitError extends Error {}
 export class SignInUserInterruptError extends Error {}
 export class SignInProviderNotSupportedError extends Error {}
 export class SignInMissingClientIdError extends Error {}
