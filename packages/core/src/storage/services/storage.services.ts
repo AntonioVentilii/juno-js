@@ -115,7 +115,10 @@ export const listAssets = async ({
   satellite?: SatelliteOptions;
   options?: ReadOptions;
 }): Promise<Assets> => {
-  const satellite = {...satelliteOptions, identity: await getAnyIdentity(satelliteOptions?.identity)};
+  const satellite = {
+    ...satelliteOptions,
+    identity: await getAnyIdentity(satelliteOptions?.identity)
+  };
 
   const {items, ...rest} = await listAssetsApi({
     collection,
@@ -190,7 +193,10 @@ export const countAssets = async ({
   satellite?: SatelliteOptions;
   options?: ReadOptions;
 }): Promise<bigint> => {
-  const satellite = {...satelliteOptions, identity: await getAnyIdentity(satelliteOptions?.identity)};
+  const satellite = {
+    ...satelliteOptions,
+    identity: await getAnyIdentity(satelliteOptions?.identity)
+  };
 
   return await countAssetsApi({
     collection,
@@ -291,7 +297,10 @@ export const deleteFilteredAssets = async ({
   satellite?: SatelliteOptions;
   filter?: ListParams;
 }): Promise<void> => {
-  const satellite = {...satelliteOptions, identity: await getAnyIdentity(satelliteOptions?.identity)};
+  const satellite = {
+    ...satelliteOptions,
+    identity: await getAnyIdentity(satelliteOptions?.identity)
+  };
 
   return await deleteFilteredAssetsApi({
     collection,
